@@ -9,6 +9,9 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
   
+  <!-- SheetJS (XLSX) para generar archivos Excel -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -48,9 +51,14 @@
   <div class="productos" id="lista-productos">
     <h2>Lista de Productos</h2>
   </div>
+
+  <!-- Botón para exportar los productos a Excel -->
+  <div id="exportar-excel">
+    <button id="btn-exportar">Descargar Productos como Excel</button>
+  </div>
   
   <!-- Modal de confirmación de eliminación -->
-  <div id="confirmacion-eliminar">
+  <div id="confirmacion-eliminar" style="display: none;">
     <div>
       <h3>¿Estás seguro de eliminar este producto?</h3>
       <button id="confirmar-eliminar">Sí, Eliminar</button>
@@ -85,7 +93,7 @@
     const buscarInput = document.getElementById('buscar-nombre');
     const btnBuscar = document.getElementById('btn-buscar');
     const confirmacionEliminar = document.getElementById('confirmacion-eliminar');
-    let productoAEliminar = null;
+    let productoAEliminar = null;  // Variable para almacenar el producto a eliminar
 
     // Función para mostrar los productos desde Firestore
     async function mostrarProductos() {
@@ -101,13 +109,19 @@
           <strong>Categoría:</strong> ${producto.categoria}<br>
           <strong>Código de barras:</strong> ${producto.barcode || 'No disponible'}<br>
           <strong>Precio:</strong> $${producto.precio.toFixed(2)}
-          <button onclick="eliminarProducto('${doc.id}')">Eliminar</button>
+          <button onclick="mostrarConfirmacionEliminar('${doc.id}')">Eliminar</button>
         `;
         listaProductos.appendChild(divItem);
       });
     }
 
-    // Función para eliminar producto de Firestore
+    // Función para mostrar el cuadro de confirmación
+    function mostrarConfirmacionEliminar(id) {
+      productoAEliminar = id; // Guardamos el ID del producto a eliminar
+      confirmacionEliminar.style.display = 'block'; // Mostramos el modal de confirmación
+    }
+
+    // Función para eliminar el producto de Firestore
     async function eliminarProducto(id) {
       try {
         await deleteDoc(doc(db, "productos", id));
@@ -116,7 +130,23 @@
       } catch (error) {
         alert("Error al eliminar el producto: " + error);
       }
+      confirmacionEliminar.style.display = 'none'; // Cerramos el modal de confirmación
     }
+
+    // Función para cancelar la eliminación
+    function cancelarEliminar() {
+      confirmacionEliminar.style.display = 'none'; // Cerramos el modal de confirmación
+    }
+
+    // Event listener para confirmar la eliminación
+    document.getElementById('confirmar-eliminar').addEventListener('click', () => {
+      if (productoAEliminar) {
+        eliminarProducto(productoAEliminar); // Llamamos a la función de eliminar
+      }
+    });
+
+    // Event listener para cancelar la eliminación
+    document.getElementById('cancelar-eliminar').addEventListener('click', cancelarEliminar);
 
     // Mostrar productos al cargar
     mostrarProductos();
@@ -196,36 +226,6 @@
       // Limpiar formulario
       formProducto.reset();
       formProducto.style.display = 'none';
-    });
-
-    // Funcionalidad para el botón "Buscar Producto"
-    document.getElementById('buscar').addEventListener('click', () => {
-      formProducto.style.display = 'none';
-      formBuscar.style.display = (formBuscar.style.display === 'flex') ? 'none' : 'flex';
-    });
-
-    // Funcionalidad de la búsqueda en el formulario "Buscar Producto"
-    document.getElementById('btn-buscar2').addEventListener('click', async () => {
-      const buscarNombre2 = document.getElementById('buscar-nombre2').value.toLowerCase();
-      const q = query(collection(db, "productos"), where("nombre", "==", buscarNombre2));
-      const querySnapshot = await getDocs(q);
-      const resultados = querySnapshot.docs.map(doc => doc.data());
-      const resultadoBusqueda = document.getElementById('resultado-busqueda');
-      const resultadosDiv = document.getElementById('resultados');
-      if (resultados.length > 0) {
-        resultadoBusqueda.style.display = 'block';
-        resultadosDiv.innerHTML = resultados.map(prod => `
-          <div class="producto-item">
-            <strong>Nombre:</strong> ${prod.nombre}<br>
-            <strong>Categoría:</strong> ${prod.categoria}<br>
-            <strong>Precio:</strong> $${prod.precio.toFixed(2)}<br>
-            <strong>Código de barras:</strong> ${prod.barcode || 'No disponible'}
-          </div>
-        `).join('');
-      } else {
-        resultadoBusqueda.style.display = 'none';
-        alert("No se encontraron productos relacionados");
-      }
     });
   </script>
 </body>
