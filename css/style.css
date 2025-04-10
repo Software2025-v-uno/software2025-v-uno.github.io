@@ -2,7 +2,7 @@ body {
   font-family: Arial, sans-serif;
   margin: 0;
   padding: 0;
-  background:  url('img/fondo1.jpg'); /* Fondo con imagen opcional */
+  background: linear-gradient(120deg, #a8edea, #4facfe), url('fondo1.jpg'); /* Fondo con imagen opcional */
   background-size: cover; /* Asegura que la imagen cubra toda la pantalla */
   background-position: center; /* Centra la imagen de fondo */
   background-repeat: no-repeat; /* Evita la repetición de la imagen */
