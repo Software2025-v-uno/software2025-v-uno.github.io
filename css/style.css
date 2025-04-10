@@ -85,7 +85,7 @@ button[type="submit"],
   background: linear-gradient(45deg, #27dd7f, #00bcd4); /* Verde azulado a azul oscuro */
   color: white;
   font-weight: bold;
-  width: 100% - 30cm;  /* Hace que el botón ocupe todo el ancho del formulario */
+  width: 100%;  /* Hace que el botón ocupe todo el ancho del formulario */
   max-width: 200px; /* Máximo ancho para los botones */
 }
 
