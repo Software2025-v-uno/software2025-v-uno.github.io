@@ -108,7 +108,7 @@ button[type="submit"]:hover,
 }
 
 .producto-item {
-  width: calc(100% - 3cm); /* Reducir el ancho en 8 cm */
+  width: calc(75% ); /* Reducir el ancho en 8 cm */
   margin: 10px auto; /* Espaciado y centrado */
   padding: 15px;
   border: 1px solid #ddd; /* Borde para distinguir el cuadro */
