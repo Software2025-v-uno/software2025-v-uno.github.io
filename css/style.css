@@ -2,7 +2,7 @@ body {
   font-family: Arial, sans-serif;
   margin: 0;
   padding: 0;
-  background: linear-gradient(120deg, #add8e6, #e0ffff);
+  background: linear-gradient(120deg, #a8edea, #4facfe); /* Verde a azul */
   color: #333;
 }
 
@@ -11,11 +11,10 @@ h1 {
   margin: 20px 0;
 }
 
-/* Imagen centrada en el encabezado */
 h1 img {
-  max-width: 100px;  /* Ajusta el tamaño de la imagen */
+  max-width: 100px;
   display: block;
-  margin: 0 auto; /* Centra la imagen */
+  margin: 0 auto;
 }
 
 .botones {
@@ -30,17 +29,31 @@ button {
   font-size: 16px;
   border: none;
   border-radius: 5px;
-  background-color: #87cefa;
+  background: linear-gradient(45deg, #b2f7ef, #5cb85c); /* Verde claro a verde más fuerte */
   color: black;
   cursor: pointer;
   font-weight: bold;
 }
 
 button:hover {
-  background-color: #00bfff;
+  background: linear-gradient(45deg, #5cb85c, #449d44);
+  color: white;
 }
 
-/* Formulario para agregar/actualizar producto */
+/* Botón de Descargar Excel */
+#btn-descargar {
+  background: linear-gradient(45deg, #7bed9f, #2ecc71);
+  color: rgb(0, 0, 0);
+}
+
+#btn-descargar:hover {
+  background: linear-gradient(45deg, #2ecc71, #27ae60);
+}
+
+/* Formularios */
+#form-agregar,
+#form-actualizar,
+#form-buscar,
 #form-producto {
   display: none;
   flex-direction: column;
@@ -48,23 +61,9 @@ button:hover {
   margin: 20px auto;
   width: 90%;
   max-width: 600px;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 5px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  padding: 20px;
-}
-
-/* Formulario de búsqueda (solo visualización) */
-#form-buscar {
-  display: none;
-  flex-direction: column;
-  align-items: center;
-  margin: 10px auto;
-  width: 90%;
-  max-width: 600px;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 5px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   padding: 20px;
 }
 
@@ -72,43 +71,44 @@ input {
   margin: 10px;
   padding: 10px;
   font-size: 16px;
-  border: 1px solid #ccc;
+  border: 1px solid #3a5a39;
   border-radius: 5px;
   width: 300px;
 }
 
 button[type="submit"],
 #form-buscar button {
-  background-color: #32cd32;
+  background: linear-gradient(45deg, #27dd7f, #00bcd4); /* Verde azulado a azul oscuro */
   color: white;
   font-weight: bold;
 }
 
 button[type="submit"]:hover,
 #form-buscar button:hover {
-  background-color: #228b22;
+  background: linear-gradient(45deg, #0c8191, #0070ac);
 }
 
+/* Productos */
 .productos {
   margin: 20px auto;
   width: 90%;
   max-width: 600px;
   background: white;
-  border-radius: 5px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
   padding: 20px;
 }
 
 .producto-item {
   margin: 10px 0;
-  padding: 10px;
-  background: rgba(245, 245, 245, 1);
-  border: 1px solid #ccc;
-  border-radius: 5px;
+  padding: 15px;
+  background: #f9f9ff;
+  border: 1px solid #d3cce3;
+  border-radius: 6px;
   text-align: left;
 }
 
-/* Sección para el código de barras */
+/* Código de barras */
 #barcode-section {
   display: flex;
   align-items: center;
@@ -125,21 +125,19 @@ button[type="submit"]:hover,
   border-radius: 5px;
 }
 
-/* Imagen que se usará como botón para iniciar el lector */
 #scan-btn {
   width: 40px;
   height: auto;
   cursor: pointer;
 }
 
-/* Contenedor para el lector de código */
 #reader {
   width: 300px;
   margin: 20px auto;
   display: none;
 }
 
-/* Modal de confirmación */
+/* Modal confirmación */
 #confirmacion-eliminar {
   display: none;
   position: fixed;
@@ -147,23 +145,24 @@ button[type="submit"]:hover,
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.4);
   justify-content: center;
   align-items: center;
   z-index: 1000;
 }
 
 #confirmacion-eliminar div {
-  background-color: white;
+  background-color: #fff0f3;
   padding: 20px;
-  border-radius: 5px;
+  border-radius: 10px;
   text-align: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 #confirmacion-eliminar button {
   margin: 10px;
-  padding: 10px;
-  background-color: #ff6347;
+  padding: 10px 15px;
+  background-color: #ff4d4f;
   color: white;
   border: none;
   border-radius: 5px;
@@ -171,10 +170,79 @@ button[type="submit"]:hover,
 }
 
 #confirmacion-eliminar button:hover {
-  background-color: #ff4500;
+  background-color: #c0392b;
 }
 
-/* Media Queries para adaptar el contenido en pantallas pequeñas */
+#chatbot-icon {
+    position: fixed;
+    bottom: 100px;
+    right: 30px;
+    background: #ffffff;
+    border: 2px solid #00bcd4;
+    padding: 10px 15px;
+    border-radius: 25px;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: bold;
+    color: #00796b;
+}
+
+#chatbot-window {
+    display: none;
+    position: fixed;
+    bottom: 160px;
+    right: 30px;
+    width: 300px;
+    max-height: 400px;
+    background: #f0fdfc;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    z-index: 999;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+#chatbot-header {
+    background: #00bcd4;
+    color: white;
+    text-align: center;
+    padding: 10px;
+    font-weight: bold;
+}
+
+#chatbot-body {
+    padding: 10px;
+    height: 250px;
+    overflow-y: auto;
+    font-size: 14px;
+}
+
+#chatbot-input {
+    width: 100%;
+    border: none;
+    border-top: 1px solid #ccc;
+    padding: 10px;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+footer {
+  background: linear-gradient(to right, #ffffff, #d4fcdc); /* blanco a verde claro */
+  padding: 15px 10px;
+  text-align: center;
+  color: #000; /* texto negro */
+  font-size: 14px;
+  font-family: Arial, sans-serif;
+  font-weight: bold;
+  border-top: 1px solid #ccc;
+}
+
+
+/* Responsive */
 @media (max-width: 768px) {
   h1 {
     font-size: 1.5em;

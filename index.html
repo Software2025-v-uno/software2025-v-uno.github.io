@@ -1,77 +1,41 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Supermercado</title>
   <link rel="icon" href="logo.png">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Supermercado El Rey</title>
+  <link rel="stylesheet" href="css/style.css" />
+
   <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
-  
-  <!-- SheetJS (XLSX) para generar archivos Excel -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
-
-  <link rel="stylesheet" href="css/style.css">
-</head>
-<body>
-  <h1><img src="logo.png" alt="Logo"> </h1>
-  <h1>Pequeño en tamaño, grande en servicio. Calidad y precios accesibles en cada producto.</h1>
-  
-  <!-- Botones principales -->
-  <div class="botones">
-    <button id="nuevo">Nuevo Producto</button>
-    <button id="actualizar">Actualizar Producto</button>
-    <button id="buscar">Buscar Producto</button>
-  </div>
-  
-  <!-- Formulario de búsqueda (solo visualización) -->
-  <form id="form-buscar">
-    <input type="text" id="buscar-nombre2" placeholder="Buscar producto por nombre o código de barras">
-    <button type="button" id="btn-buscar2">Buscar</button>
-    <div id="resultado-busqueda" class="productos" style="display: none;">
-      <h2>Resultados Relacionados</h2>
-      <div id="resultados"></div>
-    </div>
-  </form>
-  
-  <!-- Formulario compartido para agregar o actualizar producto -->
-  <form id="form-producto">
-    <input type="text" id="buscar-nombre" placeholder="Buscar producto para actualizar">
-    <button type="button" id="btn-buscar">Buscar Producto</button>
-    <input type="text" id="nombre" placeholder="Nombre del producto" required>
-    <div id="barcode-section">
-      <input type="text" id="barcode" placeholder="Código de barras">
-    </div>
-    <input type="text" id="categoria" placeholder="Categoría" required>
-    <input type="number" id="precio" step="0.01" placeholder="Precio ($)" required>
-    <button type="submit" id="btn-submit">Guardar Producto</button>
-  </form>
-  
-  <div class="productos" id="lista-productos">
-    <h2>Lista de Productos</h2>
-  </div>
-
-  <!-- Botón para exportar los productos a Excel -->
-  <div id="exportar-excel">
-    <button id="btn-exportar">Descargar Productos como Excel</button>
-  </div>
-  
-  <!-- Modal de confirmación de eliminación -->
-  <div id="confirmacion-eliminar" style="display: none;">
-    <div>
-      <h3>¿Estás seguro de eliminar este producto?</h3>
-      <button id="confirmar-eliminar">Sí, Eliminar</button>
-      <button id="cancelar-eliminar">Cancelar</button>
-    </div>
-  </div>
-
   <script type="module">
-    // Importa las funciones necesarias desde los SDKs
+
+window.addEventListener("message", function(event) {
+  if (event.origin !== "https://products.groupdocs.app/es/scanner/scan-barcode") return; // Seguridad: asegurarte de que venga del origen correcto
+  const data = event.data;
+  if (data && typeof data === 'string') {
+    if (document.activeElement.id === 'abrirEscaner') {
+      document.getElementById('barcode-agregar').value = data;
+    } else if (document.activeElement.id === 'abrirEscanerActualizar') {
+      document.getElementById('barcode-actualizar').value = data;
+    }
+  }
+});
+
+function abrirEscaner(paraActualizar = false) {
+  const ventana = window.open("https://products.groupdocs.app/es/scanner/scan-barcode", "Escaner", "width=600,height=500");
+  if (paraActualizar) {
+    document.getElementById('abrirEscanerActualizar').focus();
+  } else {
+    document.getElementById('abrirEscaner').focus();
+  }
+}
+
+
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-    import { getFirestore, collection, getDocs, doc, deleteDoc, addDoc, updateDoc, query, where } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
-    
-    // Configuración de Firebase
+    import { getFirestore, collection, getDocs, deleteDoc, addDoc, updateDoc, query, where, doc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+
     const firebaseConfig = {
       apiKey: "AIzaSyBH7kyrPjERanTG3aEkQ6WKlOdm9q5bqzw",
       authDomain: "supermercado-el-rey.firebaseapp.com",
@@ -82,151 +46,301 @@
       measurementId: "G-PHW11PGZW7"
     };
 
-    // Inicializar Firebase
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+ document.getElementById("btn-descargar").addEventListener("click", async () => {
+    const productosRef = collection(db, "productos");
+    const snapshot = await getDocs(productosRef);
 
-    let updateMode = false;
+    const productos = snapshot.docs.map(doc => doc.data());
+
+    if (productos.length === 0) {
+      alert("No hay productos para descargar.");
+      return;
+    }
+
+    const worksheetData = [
+      ["Nombre", "Categoría", "Precio", "Código de Barras"],
+      ...productos.map(prod => [
+        prod.nombre,
+        prod.categoria,
+        prod.precio,
+        prod.barcode || "No disponible"
+      ])
+    ];
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(worksheetData);
+    XLSX.utils.book_append_sheet(wb, ws, "Productos");
+
+    XLSX.writeFile(wb, "productos.xlsx");
+  });
+
     const listaProductos = document.getElementById('lista-productos');
-    const formProducto = document.getElementById('form-producto');
+    const formAgregar = document.getElementById('form-agregar');
+    const formActualizar = document.getElementById('form-actualizar');
     const formBuscar = document.getElementById('form-buscar');
-    const buscarInput = document.getElementById('buscar-nombre');
-    const btnBuscar = document.getElementById('btn-buscar');
-    const confirmacionEliminar = document.getElementById('confirmacion-eliminar');
-    let productoAEliminar = null;  // Variable para almacenar el producto a eliminar
 
-    // Función para mostrar los productos desde Firestore
     async function mostrarProductos() {
       listaProductos.innerHTML = '<h2>Lista de Productos</h2>';
       const productosRef = collection(db, "productos");
       const querySnapshot = await getDocs(productosRef);
-      querySnapshot.forEach((doc) => {
-        const producto = doc.data();
+      querySnapshot.forEach((docSnap) => {
+        const producto = docSnap.data();
         const divItem = document.createElement('div');
         divItem.className = 'producto-item';
         divItem.innerHTML = `
           <strong>Nombre:</strong> ${producto.nombre}<br>
           <strong>Categoría:</strong> ${producto.categoria}<br>
           <strong>Código de barras:</strong> ${producto.barcode || 'No disponible'}<br>
-          <strong>Precio:</strong> $${producto.precio.toFixed(2)}
-          <button onclick="mostrarConfirmacionEliminar('${doc.id}')">Eliminar</button>
+          <strong>Precio:</strong> $${producto.precio.toFixed(2)}<br>
+          <button class="btn-eliminar" data-id="${docSnap.id}">🗑️ Eliminar</button>
         `;
         listaProductos.appendChild(divItem);
       });
+
+      document.querySelectorAll('.btn-eliminar').forEach(boton => {
+        boton.addEventListener('click', async () => {
+          const id = boton.dataset.id;
+          const confirmacion = confirm("¿Estás seguro de que deseas eliminar este producto?");
+          if (confirmacion) {
+            try {
+              await deleteDoc(doc(db, "productos", id));
+              alert("Producto eliminado correctamente.");
+              mostrarProductos();
+            } catch (error) {
+              console.error("Error al eliminar el producto:", error);
+              alert("Ocurrió un error al eliminar el producto.");
+            }
+          }
+        });
+      });
     }
 
-    // Función para mostrar el cuadro de confirmación
-    function mostrarConfirmacionEliminar(id) {
-      productoAEliminar = id; // Guardamos el ID del producto a eliminar
-      confirmacionEliminar.style.display = 'block'; // Mostramos el modal de confirmación
-    }
+    async function llenarSugerencias() {
+      const datalistBuscar = document.getElementById('sugerencias-buscar');
+      const datalistActualizar = document.getElementById('sugerencias-actualizar');
+      datalistBuscar.innerHTML = '';
+      datalistActualizar.innerHTML = '';
 
-    // Función para eliminar el producto de Firestore
-    async function eliminarProducto(id) {
-      try {
-        await deleteDoc(doc(db, "productos", id));
-        alert("Producto eliminado correctamente.");
-        mostrarProductos(); // Vuelve a cargar los productos
-      } catch (error) {
-        alert("Error al eliminar el producto: " + error);
-      }
-      confirmacionEliminar.style.display = 'none'; // Cerramos el modal de confirmación
-    }
-
-    // Función para cancelar la eliminación
-    function cancelarEliminar() {
-      confirmacionEliminar.style.display = 'none'; // Cerramos el modal de confirmación
-    }
-
-    // Event listener para confirmar la eliminación
-    document.getElementById('confirmar-eliminar').addEventListener('click', () => {
-      if (productoAEliminar) {
-        eliminarProducto(productoAEliminar); // Llamamos a la función de eliminar
-      }
-    });
-
-    // Event listener para cancelar la eliminación
-    document.getElementById('cancelar-eliminar').addEventListener('click', cancelarEliminar);
-
-    // Mostrar productos al cargar
-    mostrarProductos();
-
-    // Configuración para modo "Nuevo Producto"
-    document.getElementById('nuevo').addEventListener('click', () => {
-      updateMode = false;
-      buscarInput.style.display = 'none';
-      btnBuscar.style.display = 'none';
-      formBuscar.style.display = 'none';
-      formProducto.style.display = 'flex';
-      formProducto.reset();
-    });
-
-    // Configuración para modo "Actualizar Producto"
-    document.getElementById('actualizar').addEventListener('click', () => {
-      updateMode = true;
-      buscarInput.style.display = 'block';
-      btnBuscar.style.display = 'block';
-      formBuscar.style.display = 'none';
-      formProducto.style.display = 'flex';
-      formProducto.reset();
-    });
-
-    // Funcionalidad para buscar un producto en modo actualización
-    btnBuscar.addEventListener('click', async () => {
-      const nombreBuscado = buscarInput.value.trim().toLowerCase();
-      const q = query(collection(db, "productos"), where("nombre", "==", nombreBuscado));
-      const querySnapshot = await getDocs(q);
-      if (!querySnapshot.empty) {
-        const producto = querySnapshot.docs[0].data();
-        document.getElementById('nombre').value = producto.nombre;
-        document.getElementById('categoria').value = producto.categoria;
-        document.getElementById('precio').value = producto.precio;
-        document.getElementById('barcode').value = producto.barcode || '';
-      } else {
-        alert(`El producto "${buscarInput.value}" no se encuentra registrado.`);
-        formProducto.reset();
-      }
-    });
-
-    // Manejo del submit del formulario para guardar o actualizar producto
-    formProducto.addEventListener('submit', async (event) => {
-      event.preventDefault();
-      const nombre = document.getElementById('nombre').value;
-      const categoria = document.getElementById('categoria').value;
-      const precio = parseFloat(document.getElementById('precio').value);
-      const barcode = document.getElementById('barcode').value;
-
-      try {
-        if (updateMode) {
-          const nombreBuscado = buscarInput.value.trim().toLowerCase();
-          const q = query(collection(db, "productos"), where("nombre", "==", nombreBuscado));
-          const querySnapshot = await getDocs(q);
-          const productoRef = doc(db, "productos", querySnapshot.docs[0].id); // Usar el ID encontrado
-          await updateDoc(productoRef, {
-            nombre: nombre,
-            categoria: categoria,
-            precio: precio,
-            barcode: barcode
-          });
-          alert(`Los cambios en "${nombre}" se han guardado correctamente.`);
-        } else {
-          await addDoc(collection(db, "productos"), {
-            nombre: nombre,
-            categoria: categoria,
-            precio: precio,
-            barcode: barcode
-          });
-          alert(`El producto "${nombre}" se ha guardado correctamente.`);
+      const productosRef = collection(db, "productos");
+      const querySnapshot = await getDocs(productosRef);
+      querySnapshot.forEach((docSnap) => {
+        const producto = docSnap.data();
+        const opt1 = document.createElement('option');
+        opt1.value = producto.nombre;
+        datalistBuscar.appendChild(opt1);
+        datalistActualizar.appendChild(opt1.cloneNode(true));
+        if (producto.barcode) {
+          const opt2 = document.createElement('option');
+          opt2.value = producto.barcode;
+          datalistBuscar.appendChild(opt2);
+          datalistActualizar.appendChild(opt2.cloneNode(true));
         }
-        mostrarProductos(); // Vuelve a cargar los productos
-      } catch (error) {
-        alert("Error al guardar o actualizar el producto: " + error);
+      });
+    }
+
+    document.getElementById('nuevo').onclick = () => {
+      formAgregar.style.display = 'flex';
+      formActualizar.style.display = 'none';
+      formBuscar.style.display = 'none';
+      formAgregar.reset();
+    };
+
+    document.getElementById('actualizar').onclick = () => {
+      formAgregar.style.display = 'none';
+      formActualizar.style.display = 'flex';
+      formBuscar.style.display = 'none';
+      formActualizar.reset();
+    };
+
+    document.getElementById('buscar').onclick = () => {
+      formAgregar.style.display = 'none';
+      formActualizar.style.display = 'none';
+      formBuscar.style.display = 'flex';
+      formBuscar.reset();
+    };
+
+    document.getElementById('btn-buscar-actualizar').onclick = async () => {
+      const valor = document.getElementById('buscar-nombre-actualizar').value.trim();
+      let productoEncontrado = null;
+      let refProducto = null;
+
+      let q = query(collection(db, "productos"), where("nombre", "==", valor));
+      let querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        productoEncontrado = querySnapshot.docs[0].data();
+        refProducto = querySnapshot.docs[0].ref;
+      } else {
+        q = query(collection(db, "productos"), where("barcode", "==", valor));
+        querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+          productoEncontrado = querySnapshot.docs[0].data();
+          refProducto = querySnapshot.docs[0].ref;
+        }
       }
 
-      // Limpiar formulario
-      formProducto.reset();
-      formProducto.style.display = 'none';
-    });
-  </script>
+      if (productoEncontrado) {
+        document.getElementById('nombre-actualizar').value = productoEncontrado.nombre;
+        document.getElementById('categoria-actualizar').value = productoEncontrado.categoria;
+        document.getElementById('precio-actualizar').value = productoEncontrado.precio;
+        document.getElementById('barcode-actualizar').value = productoEncontrado.barcode || '';
+        formActualizar.dataset.productoRef = refProducto.id;
+      } else {
+        alert("Producto no encontrado");
+      }
+    };
+
+    document.getElementById('btn-submit-agregar').onclick = async (e) => {
+      e.preventDefault();
+      const nuevoProducto = {
+        nombre: document.getElementById('nombre-agregar').value,
+        categoria: document.getElementById('categoria-agregar').value,
+        precio: parseFloat(document.getElementById('precio-agregar').value),
+        barcode: document.getElementById('barcode-agregar').value
+      };
+      await addDoc(collection(db, "productos"), nuevoProducto);
+      alert("Producto guardado");
+      mostrarProductos();
+      formAgregar.reset();
+    };
+
+    formActualizar.onsubmit = async (e) => {
+      e.preventDefault();
+      const nombre = document.getElementById('buscar-nombre-actualizar').value;
+      let q = query(collection(db, "productos"), where("nombre", "==", nombre));
+      let snapshot = await getDocs(q);
+
+      if (snapshot.empty) {
+        q = query(collection(db, "productos"), where("barcode", "==", nombre));
+        snapshot = await getDocs(q);
+      }
+
+      if (!snapshot.empty) {
+        const ref = snapshot.docs[0].ref;
+        await updateDoc(ref, {
+          nombre: document.getElementById('nombre-actualizar').value,
+          categoria: document.getElementById('categoria-actualizar').value,
+          precio: parseFloat(document.getElementById('precio-actualizar').value),
+          barcode: document.getElementById('barcode-actualizar').value
+        });
+        alert("Producto actualizado");
+        mostrarProductos();
+        formActualizar.reset();
+      }
+    };
+
+    document.getElementById('btn-buscar2').onclick = async () => {
+      const valor = document.getElementById('buscar-nombre2').value.toLowerCase();
+      const productosRef = collection(db, "productos");
+      const snapshot = await getDocs(productosRef);
+      const resultados = document.getElementById('resultados');
+      resultados.innerHTML = '';
+      const encontrados = snapshot.docs.filter(doc => {
+        const prod = doc.data();
+        return prod.nombre.toLowerCase() === valor || prod.barcode === valor || prod.categoria.toLowerCase() === valor;
+      });
+
+      if (encontrados.length > 0) {
+        document.getElementById('resultado-busqueda').style.display = 'block';
+        encontrados.forEach((docSnap) => {
+          const producto = docSnap.data();
+          resultados.innerHTML += `
+            <div class="producto-item">
+              <strong>Nombre:</strong> ${producto.nombre}<br>
+              <strong>Categoría:</strong> ${producto.categoria}<br>
+              <strong>Precio:</strong> $${producto.precio.toFixed(2)}<br>
+              <strong>Código de barras:</strong> ${producto.barcode || 'No disponible'}
+            </div>`;
+        });
+      } else {
+        alert("No se encontraron productos relacionados");
+      }
+    };
+
+    mostrarProductos();
+    llenarSugerencias();
+
+document.getElementById('abrirEscaner').addEventListener('click', () => abrirEscaner(false));
+document.getElementById('abrirEscanerActualizar').addEventListener('click', () => abrirEscaner(true));
+
+
+   </script>
+
+  <!-- Excel export & script externo -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.5/xlsx.full.min.js"></script>
+  <script src="js/script.js"></script>
+</head>
+
+<body>
+  <h1><img src="logo.png" alt="Logo" /></h1>
+  <h1>Pequeño en tamaño, grande en servicio. Calidad y precios accesibles en nuestro supermercado y plaza.</h1>
+
+  <div class="botones">
+    <button id="nuevo">Nuevo Producto</button>
+    <button id="actualizar">Actualizar Producto</button>
+    <button id="buscar">Buscar Producto</button>
+    <button id="btn-descargar">Descargar en Excel</button>
+  </div>
+
+
+  <!-- Formulario de agregar producto -->
+  <form id="form-agregar" style="display: none;">
+    <input type="text" id="nombre-agregar" placeholder="Nombre del producto" required />
+    <div style="display: flex; align-items: center;">
+      <input type="text" id="barcode-agregar" placeholder="Código de barras" />
+      <button type="button" id="abrirEscaner" style="margin-left: 10px;">Escanear</button>
+    </div>
+    <input type="text" id="categoria-agregar" placeholder="Categoría" required />
+    <input type="number" id="precio-agregar" step="0.01" placeholder="Precio ($)" required />
+    <button type="submit" id="btn-submit-agregar">Guardar Producto</button>
+  </form>
+
+  <!-- Formulario de actualizar producto -->
+  <form id="form-actualizar" style="display: none;">
+    <input list="sugerencias-actualizar" type="text" id="buscar-nombre-actualizar" placeholder="Buscar producto por nombre o código" autocomplete="off" required />
+    <datalist id="sugerencias-actualizar"></datalist>
+    <button type="button" id="btn-buscar-actualizar">Buscar Producto</button>
+    <input type="text" id="nombre-actualizar" placeholder="Nombre del producto" required />
+    <div style="display: flex; align-items: center;">
+      <input type="text" id="barcode-actualizar" placeholder="Código de barras" />
+      <button type="button" id="abrirEscanerActualizar" style="margin-left: 10px;">Escanear</button>
+    </div>
+    <input type="text" id="categoria-actualizar" placeholder="Categoría" required />
+    <input type="number" id="precio-actualizar" step="0.01" placeholder="Precio ($)" required />
+    <button type="submit">Guardar Cambios</button>
+  </form>
+
+  <!-- Formulario de búsqueda -->
+  <form id="form-buscar" style="display: none;">
+    <input list="sugerencias-buscar" type="text" id="buscar-nombre2" placeholder="Buscar producto por nombre, código de barras o categoría" autocomplete="off" />
+    <datalist id="sugerencias-buscar"></datalist>
+    <button type="button" id="btn-buscar2">Buscar</button>
+    <div id="resultado-busqueda" class="productos" style="display: none;">
+      <h2>Resultados Relacionados</h2>
+      <div id="resultados"></div>
+    </div>
+  </form>
+
+  <div class="productos" id="lista-productos">
+    <h2>Lista de Productos</h2>
+  </div>
+
+
+    <!-- Incluimos la librería para generar el archivo Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.5/xlsx.full.min.js"></script>
+ <footer>
+    Derechos reservados &copy; Creado 2025 | Software V1.01
+  </footer>
+<script src="js/script.js"></script>
+<script>
+  function enviarCodigo(codigo) {
+    window.opener.postMessage(codigo, "*"); // O usa el dominio exacto por seguridad
+    window.close();
+  }
+</script>
+
 </body>
+
 </html>
