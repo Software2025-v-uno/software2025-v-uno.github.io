@@ -58,12 +58,12 @@ button:hover {
 #form-actualizar,
 #form-buscar,
 #form-producto {
-  display: none;
+  display: flex;
   flex-direction: column;
   align-items: center;
   margin: 20px auto;
-  width: 90%;
-  max-width: 600px;
+  width: 26%;
+  max-width: 600px; /* Similar al cuadro de la lista de productos */
   background: rgba(255, 255, 255, 0.95);
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
@@ -76,7 +76,8 @@ input {
   font-size: 16px;
   border: 1px solid #3a5a39;
   border-radius: 5px;
-  width: 300px;
+  width: 100% -8cm; /* Se ajusta al ancho disponible */
+  max-width: 300px; /* Máximo ancho para los inputs */
 }
 
 button[type="submit"],
@@ -84,6 +85,8 @@ button[type="submit"],
   background: linear-gradient(45deg, #27dd7f, #00bcd4); /* Verde azulado a azul oscuro */
   color: white;
   font-weight: bold;
+  width: 100% - 30cm;  /* Hace que el botón ocupe todo el ancho del formulario */
+  max-width: 200px; /* Máximo ancho para los botones */
 }
 
 button[type="submit"]:hover,
@@ -93,7 +96,7 @@ button[type="submit"]:hover,
 
 .productos {
   margin: 20px auto;
-  width: 30%;
+  width: 26%;
   max-width: 400px; /* Antes era 800px */
   background: white;
   border-radius: 8px;
