@@ -11,6 +11,7 @@
   <!-- Firebase SDK -->
   <script type="module">
 
+
 window.addEventListener("message", function(event) {
   if (event.origin !== "https://products.groupdocs.app/es/scanner/scan-barcode") return; // Seguridad: asegurarte de que venga del origen correcto
   const data = event.data;
@@ -48,11 +49,125 @@ function abrirEscaner(paraActualizar = false) {
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+
+// Elementos del DOM
+const chatToggle = document.getElementById("chat-toggle");
+const chatBox = document.getElementById("chat-box");
+const chatMensajes = document.getElementById("chat-mensajes");
+const chatInput = document.getElementById("chat-input");
+const chatEnviar = document.getElementById("chat-enviar");
+
+// Mostrar/Ocultar chat
+chatToggle.addEventListener("click", () => {
+  chatBox.style.display = chatBox.style.display === "flex" ? "none" : "flex";
+});
+
+// Mostrar mensaje en el chat
+function agregarMensaje(texto, tipo) {
+  const mensaje = document.createElement("div");
+  mensaje.textContent = texto;
+  mensaje.style.alignSelf = tipo === "usuario" ? "flex-end" : "flex-start";
+  mensaje.style.backgroundColor = tipo === "usuario" ? "#dcf8c6" : "#ffffff";
+  mensaje.style.padding = "8px 12px";
+  mensaje.style.borderRadius = "15px";
+  mensaje.style.maxWidth = "80%";
+  mensaje.style.boxShadow = "0 0 3px rgba(0,0,0,0.2)";
+  chatMensajes.appendChild(mensaje);
+  chatMensajes.scrollTop = chatMensajes.scrollHeight;
+}
+
+// Responder usando datos de Firebase
+async function responderAI(pregunta) {
+  try {
+    const productosRef = collection(db, "productos");
+    const snapshot = await getDocs(productosRef);
+    const productos = snapshot.docs.map(doc => doc.data());
+
+    const preguntaMin = pregunta.toLowerCase();
+    let respuesta = "Lo siento, no encontré resultados para tu consulta.";
+
+    // Caso: cantidad total de productos
+    if (preguntaMin.includes("cuántos productos")) {
+      respuesta = `📊 Actualmente hay ${productos.length} productos guardados en la base de datos.`;
+
+    // Caso: fecha de actualización de precios
+    } else if (
+      preguntaMin.includes("fecha de actualización") ||
+      preguntaMin.includes("última actualización")
+    ) {
+      const fechas = productos
+        .map(p => p.fechaUltimaActualizacion)
+        .filter(f => !!f)
+        .map(f => new Date(f));
+
+      if (fechas.length > 0) {
+        const fechaMasReciente = new Date(Math.max(...fechas));
+        respuesta = `🕒 La última actualización de precios fue el ${fechaMasReciente.toLocaleString()}.`;
+      } else {
+        respuesta = "⚠️ No se encontró información de actualizaciones.";
+      }
+
+    // Caso: productos relacionados por nombre
+    } else {
+      const coincidencias = productos.filter(prod => {
+        const nombre = prod.nombre?.toLowerCase() || "";
+        return preguntaMin.includes(nombre) || nombre.includes(preguntaMin);
+      });
+
+      if (coincidencias.length > 0) {
+        respuesta = `🔍 Se encontraron ${coincidencias.length} productos relacionados:\n`;
+
+        coincidencias.forEach(prod => {
+          respuesta += `\n────────────────────\n`;
+          respuesta += `📦 *${prod.nombre}*\n`;
+          respuesta += `📂 Categoría: ${prod.categoria || "No disponible"}\n`;
+          respuesta += `💲 Precio: $${prod.precio?.toFixed(2) || "N/A"}\n`;
+          respuesta += `🔍 Código: ${prod.barcode || "No disponible"}\n`;
+          if (prod.fechaUltimaActualizacion) {
+            const fecha = new Date(prod.fechaUltimaActualizacion);
+            respuesta += `🗓️ Última actualización: ${fecha.toLocaleDateString()} ${fecha.toLocaleTimeString()}\n`;
+          }
+          if (prod.enlaceGoogle) {
+            respuesta += `🌐 Ver en Google: ${prod.enlaceGoogle}\n`;
+          }
+        });
+
+        respuesta += `\n────────────────────`;
+      }
+    }
+
+    agregarMensaje(respuesta.trim(), "ai");
+  } catch (error) {
+    console.error("Error al responder:", error);
+    agregarMensaje("⚠️ Hubo un error al consultar la base de datos.", "ai");
+  }
+}
+
+
+// Enviar pregunta al presionar botón
+chatEnviar.addEventListener("click", () => {
+  const pregunta = chatInput.value.trim();
+  if (pregunta !== "") {
+    agregarMensaje(pregunta, "usuario");
+    responderAI(pregunta);
+    chatInput.value = "";
+  }
+});
+
+// Enviar con tecla Enter
+chatInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    chatEnviar.click();
+  }
+});
+
+
  document.getElementById("btn-descargar").addEventListener("click", async () => {
     const productosRef = collection(db, "productos");
     const snapshot = await getDocs(productosRef);
 
     const productos = snapshot.docs.map(doc => doc.data());
+
 
     if (productos.length === 0) {
       alert("No hay productos para descargar.");
@@ -206,30 +321,32 @@ function abrirEscaner(paraActualizar = false) {
       formAgregar.reset();
     };
 
-    formActualizar.onsubmit = async (e) => {
-      e.preventDefault();
-      const nombre = document.getElementById('buscar-nombre-actualizar').value;
-      let q = query(collection(db, "productos"), where("nombre", "==", nombre));
-      let snapshot = await getDocs(q);
+   formActualizar.onsubmit = async (e) => {
+  e.preventDefault();
+  const nombre = document.getElementById('buscar-nombre-actualizar').value;
+  let q = query(collection(db, "productos"), where("nombre", "==", nombre));
+  let snapshot = await getDocs(q);
 
-      if (snapshot.empty) {
-        q = query(collection(db, "productos"), where("barcode", "==", nombre));
-        snapshot = await getDocs(q);
-      }
+  if (snapshot.empty) {
+    q = query(collection(db, "productos"), where("barcode", "==", nombre));
+    snapshot = await getDocs(q);
+  }
 
-      if (!snapshot.empty) {
-        const ref = snapshot.docs[0].ref;
-        await updateDoc(ref, {
-          nombre: document.getElementById('nombre-actualizar').value,
-          categoria: document.getElementById('categoria-actualizar').value,
-          precio: parseFloat(document.getElementById('precio-actualizar').value),
-          barcode: document.getElementById('barcode-actualizar').value
-        });
-        alert("Producto actualizado");
-        mostrarProductos();
-        formActualizar.reset();
-      }
-    };
+  if (!snapshot.empty) {
+    const ref = snapshot.docs[0].ref;
+    await updateDoc(ref, {
+      nombre: document.getElementById('nombre-actualizar').value,
+      categoria: document.getElementById('categoria-actualizar').value,
+      precio: parseFloat(document.getElementById('precio-actualizar').value),
+      barcode: document.getElementById('barcode-actualizar').value,
+      fechaUltimaActualizacion: new Date().toISOString()  // Agregar la fecha de la última actualización
+    });
+    alert("Producto actualizado");
+    mostrarProductos();
+    formActualizar.reset();
+  }
+};
+
 
     document.getElementById('btn-buscar2').onclick = async () => {
       const valor = document.getElementById('buscar-nombre2').value.toLowerCase();
@@ -331,7 +448,7 @@ document.getElementById('abrirEscanerActualizar').addEventListener('click', () =
     <!-- Incluimos la librería para generar el archivo Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.5/xlsx.full.min.js"></script>
  <footer>
-    Derechos reservados &copy; Creado 2025 | Software V1.01
+    Derechos reservados &copy; 2025 | Software V1.01
   </footer>
 <script src="js/script.js"></script>
 <script>
@@ -340,5 +457,43 @@ document.getElementById('abrirEscanerActualizar').addEventListener('click', () =
     window.close();
   }
 </script>
+
+<!-- Botón flotante del chat -->
+<div id="chat-toggle" style="position: fixed; right: 30px; bottom: 30px; z-index: 1000; cursor: pointer;">
+  <img src="ia.png" alt="Chat AI" style="width: 60px;" />
+  <div style="background-color: white; padding: 5px 10px; border-radius: 10px; box-shadow: 0 0 5px gray; margin-top: 5px;">
+    ¡Hola! Soy NOVA
+  </div>
+</div>
+
+<!-- Contenedor del chat -->
+<div id="chat-box" style="
+  position: fixed;
+  right: 20px;
+  bottom: 100px;
+  width: 300px;
+  height: 400px;
+  background-image: url('fondo-chat.jpg');
+  background-size: cover;
+  background-position: center;
+  display: none;
+  flex-direction: column;
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 0 10px rgba(0,0,0,0.3);
+  z-index: 1000;
+  font-family: Arial, sans-serif;
+">
+  <div style="background: linear-gradient(45deg, #117c70, #0e610e); /* Verde claro a verde más fuerte */; color: white; padding: 10px; text-align: center; font-weight: bold;">
+    Asistente Virtual NOVA
+  </div>
+  <div id="chat-mensajes" style="flex: 1; padding: 10px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;"></div>
+  <div style="padding: 10px; background-color: rgba(255,255,255,0.9); display: flex; gap: 5px;">
+    <input id="chat-input" type="text" placeholder="Escribe tu pregunta..." style="flex: 1; padding: 5px; border: 1px solid #425f1c; border-radius: 5px;" />
+    <button id="chat-enviar" style="padding: 5px 10px; background-color: #106e13; color: rgb(0, 0, 0); border: none; border-radius: 5px; cursor: pointer;">Enviar</button>
+  </div>
+</div>
+
 </body>
+
 </html>
