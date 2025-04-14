@@ -145,8 +145,7 @@ async function responderAI(pregunta) {
           respuesta += `🔍 Código de barras: ${barcode}\n`;
           respuesta += `💲 Precio: $${precio}\n`;
           respuesta += `🗓️ Última actualización: ${fechaTexto}\n`;
-          respuesta += `🌐 Ver en Google: ${enlaceGoogle}\n`;
-          respuesta += `───────────────\n`;
+                   respuesta += `───────────────\n`;
         });
       }
     }
@@ -157,6 +156,7 @@ async function responderAI(pregunta) {
     agregarMensaje("⚠️ Hubo un error al consultar la base de datos.", "ai");
   }
 }
+
 
 // Enviar pregunta al presionar botón
 chatEnviar.addEventListener("click", () => {
