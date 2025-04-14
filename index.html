@@ -133,7 +133,7 @@ async function responderAI(pregunta) {
         respuesta = `🔍 Se encontraron ${coincidencias.length} productos relacionados:\n`;
 
         coincidencias.forEach(prod => {
-          respuesta += `\n──────────────\n`;
+          respuesta += `\n───────────────\n`;
           respuesta += `📦 *${prod.nombre}*\n`;
           respuesta += `📂 Categoría: ${prod.categoria || "No disponible"}\n`;
           respuesta += `💲 Precio: $${prod.precio?.toFixed(2) || "N/A"}\n`;
@@ -147,7 +147,7 @@ async function responderAI(pregunta) {
           }
         });
 
-        respuesta += `\n──────────────`;
+        respuesta += `\n───────────────`;
       }
     }
 
