@@ -132,23 +132,24 @@ async function responderAI(pregunta) {
         respuesta = `🔍 Se encontraron ${coincidencias.length} productos relacionados:\n`;
 
         coincidencias.forEach(prod => {
-  const nombre = prod.nombre || "Nombre no disponible";
-  const categoria = prod.categoria || "No disponible";
-  const barcode = prod.barcode || "No disponible";
-  const precio = prod.precio?.toFixed(2) || "N/A";
-  const fecha = prod.fechaUltimaActualizacion ? new Date(prod.fechaUltimaActualizacion) : null;
-  const fechaTexto = fecha ? `${fecha.toLocaleDateString()} ${fecha.toLocaleTimeString()}` : "No disponible";
-  const enlaceGoogle = prod.enlaceGoogle || `https://www.google.com/search?q=${encodeURIComponent(nombre + " precio")}`;
+          const nombre = prod.nombre || "Nombre no disponible";
+          const categoria = prod.categoria || "No disponible";
+          const barcode = prod.barcode || "No disponible";
+          const precio = prod.precio?.toFixed(2) || "N/A";
+          const fecha = prod.fechaUltimaActualizacion ? new Date(prod.fechaUltimaActualizacion) : null;
+          const fechaTexto = fecha ? `${fecha.toLocaleDateString()} ${fecha.toLocaleTimeString()}` : "No disponible";
+          const enlaceGoogle = prod.enlaceGoogle || `https://www.google.com/search?q=${encodeURIComponent(nombre + " precio")}`;
 
-  respuesta += `\n📦 ${nombre}\n`;
-  respuesta += `📂 Categoría: ${categoria}\n`;
-  respuesta += `🔍 Código de barras: ${barcode}\n`;
-  respuesta += `💲 Precio: $${precio}\n`;
-  respuesta += `🗓️ Última actualización: ${fechaTexto}\n`;
-  respuesta += `🌐 Ver más en Google: ${enlaceGoogle}\n`;
-  respuesta += `───────────────\n`;
-});
-
+          respuesta += `\n📦 ${nombre}\n`;
+          respuesta += `📂 Categoría: ${categoria}\n`;
+          respuesta += `🔍 Código de barras: ${barcode}\n`;
+          respuesta += `💲 Precio: $${precio}\n`;
+          respuesta += `🗓️ Última actualización: ${fechaTexto}\n`;
+          respuesta += `🌐 Ver en Google: ${enlaceGoogle}\n`;
+          respuesta += `───────────────\n`;
+        });
+      }
+    }
 
     agregarMensaje(respuesta.trim(), "ai");
   } catch (error) {
