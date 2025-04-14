@@ -76,7 +76,7 @@ function agregarMensaje(texto, tipo) {
   chatMensajes.scrollTop = chatMensajes.scrollHeight;
 }
 
-// Responder usando datos de Firebase
+// Responder usando datos de Firebase 
 async function responderAI(pregunta) {
   try {
     const productosRef = collection(db, "productos");
@@ -110,7 +110,6 @@ async function responderAI(pregunta) {
     // Caso: buscar por código de barras o sinónimos o nombre
     } else {
       const esCodigoBarras = /^\d{8,13}$/.test(preguntaMin);
-
       let coincidencias = [];
 
       if (esCodigoBarras) {
@@ -133,23 +132,23 @@ async function responderAI(pregunta) {
         respuesta = `🔍 Se encontraron ${coincidencias.length} productos relacionados:\n`;
 
         coincidencias.forEach(prod => {
-          respuesta += `\n───────────────\n`;
-          respuesta += `📦 *${prod.nombre}*\n`;
-          respuesta += `📂 Categoría: ${prod.categoria || "No disponible"}\n`;
-          respuesta += `💲 Precio: $${prod.precio?.toFixed(2) || "N/A"}\n`;
-          respuesta += `🔍 Código: ${prod.barcode || "No disponible"}\n`;
-          if (prod.fechaUltimaActualizacion) {
-            const fecha = new Date(prod.fechaUltimaActualizacion);
-            respuesta += `🗓️ Última actualización: ${fecha.toLocaleDateString()} ${fecha.toLocaleTimeString()}\n`;
-          }
-          if (prod.enlaceGoogle) {
-            respuesta += `🌐 Ver en Google: ${prod.enlaceGoogle}\n`;
-          }
-        });
+  const nombre = prod.nombre || "Nombre no disponible";
+  const categoria = prod.categoria || "No disponible";
+  const barcode = prod.barcode || "No disponible";
+  const precio = prod.precio?.toFixed(2) || "N/A";
+  const fecha = prod.fechaUltimaActualizacion ? new Date(prod.fechaUltimaActualizacion) : null;
+  const fechaTexto = fecha ? `${fecha.toLocaleDateString()} ${fecha.toLocaleTimeString()}` : "No disponible";
+  const enlaceGoogle = prod.enlaceGoogle || `https://www.google.com/search?q=${encodeURIComponent(nombre + " precio")}`;
 
-        respuesta += `\n───────────────`;
-      }
-    }
+  respuesta += `\n📦 ${nombre}\n`;
+  respuesta += `📂 Categoría: ${categoria}\n`;
+  respuesta += `🔍 Código de barras: ${barcode}\n`;
+  respuesta += `💲 Precio: $${precio}\n`;
+  respuesta += `🗓️ Última actualización: ${fechaTexto}\n`;
+  respuesta += `🌐 Ver más en Google: ${enlaceGoogle}\n`;
+  respuesta += `───────────────\n`;
+});
+
 
     agregarMensaje(respuesta.trim(), "ai");
   } catch (error) {
