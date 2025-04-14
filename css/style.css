@@ -161,7 +161,7 @@ button[type="submit"]:hover,
 }
 
 #confirmacion-eliminar div {
-  background-color: #fff0f3;
+  background-color: #dd123b;
   padding: 20px;
   border-radius: 10px;
   text-align: center;
@@ -172,7 +172,7 @@ button[type="submit"]:hover,
   margin: 10px;
   padding: 10px 15px;
   background-color: #ff4d4f;
-  color: white;
+  color: rgb(0, 0, 0);
   border: none;
   border-radius: 5px;
   cursor: pointer;
@@ -238,6 +238,23 @@ button[type="submit"]:hover,
     font-size: 14px;
     box-sizing: border-box;
 }
+
+#mic-btn {
+  background-color: #25D366; /* Color típico de WhatsApp */
+  border-radius: 50%;
+  width: 45px;
+  height: 45px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  transition: transform 0.2s ease;
+}
+
+#mic-btn:hover {
+  transform: scale(1.1);
+}
+
 
 footer {
   background: linear-gradient(to right, #ffffff, #d4fcdc); /* blanco a verde claro */

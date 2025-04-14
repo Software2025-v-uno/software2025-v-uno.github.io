@@ -83,7 +83,7 @@ async function responderAI(pregunta) {
     const snapshot = await getDocs(productosRef);
     const productos = snapshot.docs.map(doc => doc.data());
 
-    const preguntaMin = pregunta.toLowerCase();
+    const preguntaMin = pregunta.toLowerCase().trim();
     let respuesta = "Lo siento, no encontré resultados para tu consulta.";
 
     // Caso: cantidad total de productos
@@ -107,12 +107,27 @@ async function responderAI(pregunta) {
         respuesta = "⚠️ No se encontró información de actualizaciones.";
       }
 
-    // Caso: productos relacionados por nombre
+    // Caso: buscar por código de barras o sinónimos o nombre
     } else {
-      const coincidencias = productos.filter(prod => {
-        const nombre = prod.nombre?.toLowerCase() || "";
-        return preguntaMin.includes(nombre) || nombre.includes(preguntaMin);
-      });
+      const esCodigoBarras = /^\d{8,13}$/.test(preguntaMin);
+
+      let coincidencias = [];
+
+      if (esCodigoBarras) {
+        coincidencias = productos.filter(prod =>
+          prod.barcode?.toString() === preguntaMin
+        );
+      } else {
+        coincidencias = productos.filter(prod => {
+          const nombre = prod.nombre?.toLowerCase() || "";
+          const sinonimos = prod.sinonimos?.map(s => s.toLowerCase()) || [];
+          return (
+            nombre.includes(preguntaMin) ||
+            sinonimos.some(s => preguntaMin.includes(s)) ||
+            preguntaMin.includes(nombre)
+          );
+        });
+      }
 
       if (coincidencias.length > 0) {
         respuesta = `🔍 Se encontraron ${coincidencias.length} productos relacionados:\n`;
@@ -143,7 +158,6 @@ async function responderAI(pregunta) {
   }
 }
 
-
 // Enviar pregunta al presionar botón
 chatEnviar.addEventListener("click", () => {
   const pregunta = chatInput.value.trim();
@@ -160,6 +174,10 @@ chatInput.addEventListener("keydown", (e) => {
     chatEnviar.click();
   }
 });
+
+
+
+
 
 
  document.getElementById("btn-descargar").addEventListener("click", async () => {
@@ -461,7 +479,7 @@ document.getElementById('abrirEscanerActualizar').addEventListener('click', () =
 <!-- Botón flotante del chat -->
 <div id="chat-toggle" style="position: fixed; right: 30px; bottom: 30px; z-index: 1000; cursor: pointer;">
   <img src="ia.png" alt="Chat AI" style="width: 60px;" />
-  <div style="background-color: white; padding: 5px 10px; border-radius: 10px; box-shadow: 0 0 5px gray; margin-top: 5px;">
+  <div style="background-color: rgb(197, 247, 153); padding: 5px 10px; border-radius: 10px; box-shadow: 0 0 5px gray; margin-top: 5px;">
     ¡Hola! Soy NOVA
   </div>
 </div>
